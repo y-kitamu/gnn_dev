@@ -3,12 +3,18 @@
 Author : Yusuke Kitamura
 Create Date : 2023-12-03 08:35:34
 """
+
 from typing import List, Tuple, Optional
 
 import numpy as np
 import tensorflow as tf
 
 from .logger import logger
+from .trainer import ModelParams
+
+
+def get_model(params: ModelParams) -> tf.keras.Layer:
+    """ """
 
 
 class GraphConv(tf.keras.layers.Layer):

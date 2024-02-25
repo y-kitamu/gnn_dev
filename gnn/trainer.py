@@ -2,6 +2,7 @@
 """
 
 from pathlib import Path
+from typing import List
 
 import tensorflow as tf
 import keras
@@ -19,6 +20,8 @@ class DataloaderParams(BaseModel):
     dataset_dir: Path
     batch_size: int = 1
     steps_per_epoch: int = -1
+    network_input_keys: List[str] = []
+    loss_input_keys: List[str] = []
 
 
 class OptimizerParams(BaseModel):
@@ -94,6 +97,20 @@ class BaseTrainer:
 
     def _train_step(self, data):
         """ """
+        self.x = [data[key] for key in self.config.train_dataloader_params.network_input_keys]
+        self.y = [data[key] for key in self.config.train_dataloader_params.loss_input_keys]
+
+        with tf.GradientTape() as tape:
+            self.y_pred = self.model(*self.x, training=True)
+            self.loss_val = self.loss(*(self.y.append(self.y_pred)))
+
+        grads = tape.gradient(self.loss_val, self.model.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self.model.trainable_weights))
 
     def _test_step(self, data):
         """ """
+        self.x = [data[key] for key in self.config.test_dataloader_params.network_input_keys]
+        self.y = [data[key] for key in self.config.test_dataloader_params.loss_input_keys]
+
+        self.y_pred = self.model(*self.x, training=False)
+        self.loss_val = self.loss(*(self.y.append(self.y_pred)))
