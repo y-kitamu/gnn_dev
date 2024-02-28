@@ -14,14 +14,23 @@ import gnn
 
 def run(config_path: Path):
     """ """
-    with open(config_path, "r") as f:
-        config = gnn.TrainParams.model_validate_json(f.read())
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            config = gnn.TrainParams.model_validate_json(f.read())
+    else:
+        config = gnn.TrainParams()
 
     model = gnn.layers.get_model(config.model_params)
     loss = gnn.losses.get_losses(config.loss_params)
     optimizer = gnn.optimizers.get_optimizer(config.optimizer_params)
-    train_dataloader, test_dataloader = gnn.dataloader.get_dataloader(config.train_dataloader_params)
-    callbacks = keras.callbacks.CallbackList([])
+    train_dataloader, test_dataloader = gnn.dataloader.get_dataloader(
+        config.train_dataloader_params, config.test_dataloader_params
+    )
+    callbacks = keras.callbacks.CallbackList(
+        [
+            gnn.callbacks.MetricsLogger(),
+        ]
+    )
     trainer = gnn.BaseTrainer(
         model=model,
         loss=loss,

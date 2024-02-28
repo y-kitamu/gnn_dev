@@ -1,23 +1,17 @@
-"""layers.py
+"""gcn.py
 
 Author : Yusuke Kitamura
-Create Date : 2023-12-03 08:35:34
+Create Date : 2024-02-28 22:15:26
 """
 
-from typing import List, Tuple, Optional
-
-import numpy as np
+import keras
 import tensorflow as tf
+import numpy as np
 
-from .logger import logger
-from .trainer import ModelParams
-
-
-def get_model(params: ModelParams) -> tf.keras.Layer:
-    """ """
+from ...logger import logger
 
 
-class GraphConv(tf.keras.layers.Layer):
+class GraphConv(keras.layers.Layer):
     """Graph convolution layer."""
 
     def __init__(
@@ -26,7 +20,7 @@ class GraphConv(tf.keras.layers.Layer):
         num_nodes: int,
         adjacency_list: np.ndarray,
         bias: bool = True,
-        activation: Optional[tf.keras.layers.Activation] = None,
+        activation: keras.layers.Activation | None = None,
         **kwargs
     ):
         """
@@ -50,7 +44,7 @@ class GraphConv(tf.keras.layers.Layer):
         ).reshape(1, -1, 1)
         self.node_weights = tf.convert_to_tensor((node_weights**2).reshape(1, -1, 1), dtype=tf.float32)
 
-        self.linear = tf.keras.layers.Dense(out_dim, use_bias=False)
+        self.linear = keras.layers.Dense(out_dim, use_bias=False)
         if bias:
             self.bias = tf.Variable(tf.zeros((1, 1, out_dim), dtype=tf.float32), trainable=True)
         self.activation = activation

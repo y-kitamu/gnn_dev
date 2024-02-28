@@ -4,44 +4,32 @@
 from pathlib import Path
 from typing import List
 
-import tensorflow as tf
 import keras
+import tensorflow as tf
 from pydantic import BaseModel
 
-
-class ModelParams(BaseModel):
-    input_shape: tuple
-    output_shape: tuple
-    model_name: str
-    model_params: dict
+from .optimizers import OptimizerParams
+from .losses import LossParams
+from .layers import NetworkParams
 
 
 class DataloaderParams(BaseModel):
-    dataset_dir: Path
-    batch_size: int = 1
-    steps_per_epoch: int = -1
-    network_input_keys: List[str] = []
-    loss_input_keys: List[str] = []
-
-
-class OptimizerParams(BaseModel):
-    optimizer_name: str
-    optimizer_params: dict
-
-
-class LossParams(BaseModel):
-    loss_name: str
-    loss_params: dict
+    dataset_dir: Path = Path()
+    dataset_name: str = ""
+    dataset_params: dict = {}
+    # batch_size: int = 1
+    # steps_per_epoch: int = -1
+    # network_input_keys: List[str] = []
+    # loss_input_keys: List[str] = []
 
 
 class TrainParams(BaseModel):
-    epochs: int
-    learning_rate: float
-    model_params: ModelParams
-    train_dataloader_params: DataloaderParams
-    test_dataloader_params: DataloaderParams
-    optimizer_params: OptimizerParams
-    loss_params: LossParams
+    epochs: int = 5
+    network_params: NetworkParams = NetworkParams()
+    train_dataloader_params: DataloaderParams = DataloaderParams()
+    test_dataloader_params: DataloaderParams = DataloaderParams()
+    optimizer_params: OptimizerParams = OptimizerParams()
+    loss_params: LossParams = LossParams()
 
 
 class BaseTrainer:
@@ -97,11 +85,13 @@ class BaseTrainer:
 
     def _train_step(self, data):
         """ """
-        self.x = [data[key] for key in self.config.train_dataloader_params.network_input_keys]
-        self.y = [data[key] for key in self.config.train_dataloader_params.loss_input_keys]
+        # self.x = [data[key] for key in self.config.train_dataloader_params.network_input_keys]
+        # self.y = [data[key] for key in self.config.train_dataloader_params.loss_input_keys]
+        self.x, self.y = [data[0]], [data[1]]
 
         with tf.GradientTape() as tape:
             self.y_pred = self.model(*self.x, training=True)
+            print(self.y_pred.shape, self.y[0].shape)
             self.loss_val = self.loss(*(self.y.append(self.y_pred)))
 
         grads = tape.gradient(self.loss_val, self.model.trainable_weights)
