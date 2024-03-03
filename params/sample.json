@@ -1,0 +1,31 @@
+{
+  "epochs": 10,
+  "network_params": {
+    "name": "simple",
+    "params": {}
+  },
+  "train_dataloader_params": {
+    "name": "mnist",
+    "params": {
+      "batch_size": 32
+    }
+  },
+  "test_dataloader_params": {
+    "name": "mnist",
+    "params": {
+      "batch_size": 32
+    }
+  },
+  "optimizer_params": {
+    "name": "adam",
+    "params": {}
+  },
+  "loss_params": {
+    "name": "cross_entropy",
+      "params": {
+          "from_logits": true
+      }
+  },
+  "network_input_keys": ["inputs"],
+  "loss_input_keys": ["y_true"]
+}

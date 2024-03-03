@@ -1,106 +1,120 @@
 """trainer.py
 """
 
-from pathlib import Path
 from typing import List
 
-import keras
 import tensorflow as tf
 from pydantic import BaseModel
 
-from .optimizers import OptimizerParams
-from .losses import LossParams
-from .layers import NetworkParams
+from .base_trainer import BaseTrainer
+from .callbacks import BaseCallback
+from .dataloader import (DataloaderParams, get_dataloader,
+                         get_default_dataloader_params)
+from .layers import NetworkParams, get_default_model_params, get_model
+from .losses import LossParams, get_default_loss_params, get_loss
+from .optimizers import (OptimizerParams, get_default_optimizer_params,
+                         get_optimizer)
 
 
-class DataloaderParams(BaseModel):
-    dataset_dir: Path = Path()
-    dataset_name: str = ""
-    dataset_params: dict = {}
-    # batch_size: int = 1
-    # steps_per_epoch: int = -1
-    # network_input_keys: List[str] = []
-    # loss_input_keys: List[str] = []
+class Trainer(BaseTrainer):
+    class Params(BaseModel):
+        epochs: int = 5
+        network_params: NetworkParams = NetworkParams()
+        train_dataloader_params: DataloaderParams = DataloaderParams()
+        test_dataloader_params: DataloaderParams = DataloaderParams()
+        optimizer_params: OptimizerParams = OptimizerParams()
+        loss_params: LossParams = LossParams()
+        network_input_keys: List[str] = ["inputs"]
+        loss_input_keys: List[str] = ["y_true"]
 
+        @classmethod
+        def get_default_params(
+            cls,
+            network_name: str = "simple",
+            optimizer_name: str = "adam",
+            loss_name: str = "cross_entropy",
+            dataloader_name: str = "mnist",
+        ):
+            """ """
+            return cls(
+                network_params=NetworkParams(
+                    name=network_name, params=get_default_model_params(network_name).model_dump()
+                ),
+                optimizer_params=OptimizerParams(
+                    name=optimizer_name, params=get_default_optimizer_params(optimizer_name).model_dump()
+                ),
+                loss_params=LossParams(
+                    name=loss_name, params=get_default_loss_params(loss_name).model_dump()
+                ),
+                train_dataloader_params=DataloaderParams(
+                    name=dataloader_name,
+                    params=get_default_dataloader_params(dataloader_name).model_dump(),
+                ),
+                test_dataloader_params=DataloaderParams(
+                    name=dataloader_name,
+                    params=get_default_dataloader_params(dataloader_name).model_dump(),
+                ),
+            )
 
-class TrainParams(BaseModel):
-    epochs: int = 5
-    network_params: NetworkParams = NetworkParams()
-    train_dataloader_params: DataloaderParams = DataloaderParams()
-    test_dataloader_params: DataloaderParams = DataloaderParams()
-    optimizer_params: OptimizerParams = OptimizerParams()
-    loss_params: LossParams = LossParams()
-
-
-class BaseTrainer:
-    def __init__(
-        self,
-        model: keras.Layer,
-        loss: keras.Loss,
-        optimizer: keras.Optimizer,
-        train_dataloader: tf.data.Dataset,
-        test_dataloader: tf.data.Dataset,
-        callbacks: keras.callbacks.CallbackList,
-        config: TrainParams,
-    ):
+    def __init__(self, params: Params, callbacks: BaseCallback):
         """ """
-        self.model = model
-        self.loss = loss
-        self.optimizer = optimizer
-        self.train_dataloader = train_dataloader
-        self.test_dataloader = test_dataloader
-        self.callbacks = callbacks
-        self.callbacks.set_model(self)
-        self.config = config
+        self._params = params
+        self._network = get_model(params.network_params)
+        self._loss = get_loss(params.loss_params)
+        self._optimizer = get_optimizer(params.optimizer_params)
+        self._train_dataloader = get_dataloader(params.train_dataloader_params, is_train=True)
+        self._test_dataloader = get_dataloader(params.test_dataloader_params, is_train=False)
+        self._callbacks = callbacks
+        self._callbacks.set_trainer(self)
 
     def train(self):
         """ """
-        self.callbacks.on_train_begin()
+        self._callbacks.on_train_begin()
 
-        for epoch in range(self.config.epochs):
-            self.callbacks.on_epoch_begin(epoch)
+        for epoch in range(self._params.epochs):
+            self._callbacks.on_epoch_begin(epoch)
 
-            assert self.config.train_dataloader_params.steps_per_epoch > 0, "steps_per_epoch must be set"
-            assert self.config.test_dataloader_params.steps_per_epoch > 0, "steps_per_epoch must be set"
+            assert self.train_dataloader.steps_per_epoch > 0, "steps_per_epoch must be set"
+            assert self.test_dataloader.steps_per_epoch > 0, "steps_per_epoch must be set"
 
             # train
-            train_iter = iter(self.train_dataloader)
-            for step in range(self.config.train_dataloader_params.steps_per_epoch):
-                self.callbacks.on_train_batch_begin(step)
-                data = next(train_iter)
+            for step in range(self.train_dataloader.steps_per_epoch):
+                self._callbacks.on_train_batch_begin(step)
+                data = self.train_dataloader.get_next()
                 self._train_step(data)
-                self.callbacks.on_train_batch_end(step)
+                self._callbacks.on_train_batch_end(step)
 
             # validation
-            test_iter = iter(self.test_dataloader)
-            for step in range(self.config.test_dataloader_params.steps_per_epoch):
-                self.callbacks.on_test_batch_begin(step)
-                data = next(test_iter)
+            self._callbacks.on_test_begin()
+            for step in range(self.test_dataloader.steps_per_epoch):
+                self._callbacks.on_test_batch_begin(step)
+                data = self.test_dataloader.get_next()
                 self._test_step(data)
-                self.callbacks.on_test_batch_end(step)
+                self._callbacks.on_test_batch_end(step)
+            self._callbacks.on_test_end()
 
-            self.callbacks.on_epoch_end(epoch)
+            self._callbacks.on_epoch_end(epoch)
 
-        self.callbacks.on_train_end()
+        self._callbacks.on_train_end()
 
     def _train_step(self, data):
         """ """
-        # self.x = [data[key] for key in self.config.train_dataloader_params.network_input_keys]
-        # self.y = [data[key] for key in self.config.train_dataloader_params.loss_input_keys]
-        self.x, self.y = [data[0]], [data[1]]
+        self.x = {key: data[key] for key in self._params.network_input_keys}
+        self.y = {key: data[key] for key in self._params.loss_input_keys}
 
         with tf.GradientTape() as tape:
-            self.y_pred = self.model(*self.x, training=True)
-            print(self.y_pred.shape, self.y[0].shape)
-            self.loss_val = self.loss(*(self.y.append(self.y_pred)))
+            self.y_pred = self._network(**self.x, training=True)
+            self.y["y_pred"] = self.y_pred
+            self.loss_val = self.loss(**self.y)
 
-        grads = tape.gradient(self.loss_val, self.model.trainable_weights)
-        self.optimizer.apply_gradients(zip(grads, self.model.trainable_weights))
+        grads = tape.gradient(self.loss_val, self._network.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self._network.trainable_weights))
 
     def _test_step(self, data):
         """ """
-        self.x = [data[key] for key in self.config.test_dataloader_params.network_input_keys]
-        self.y = [data[key] for key in self.config.test_dataloader_params.loss_input_keys]
+        self.x = {key: data[key] for key in self._params.network_input_keys}
+        self.y = {key: data[key] for key in self._params.loss_input_keys}
 
-        self.y_pred = self.model(*self.x, training=False)
-        self.loss_val = self.loss(*(self.y.append(self.y_pred)))
+        self.y_pred = self._network(**self.x, training=False)
+        self.y["y_pred"] = self.y_pred
+        self.loss_val = self._loss(**self.y)

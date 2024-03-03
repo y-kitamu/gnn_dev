@@ -4,37 +4,56 @@ Author : Yusuke Kitamura
 Create Date : 2024-02-25 22:47:21
 """
 
-from typing import Tuple
-
 import keras
 import tensorflow as tf
+from pydantic import BaseModel
 
-from .trainer import DataloaderParams
+from ..base import BaseParams, get_object_default_params
+from .base import BaseDataloader
 
 
-def get_dataloader(
-    train_params: DataloaderParams, test_params
-) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+class DataloaderParams(BaseParams):
+    pass
+
+
+class MnistDataloader(BaseDataloader):
+    class Params(BaseDataloader.Params):
+        pass
+
+    def __init__(self, params: Params, is_train: bool):
+        self.params = params
+        self.x, self.y = self.get_data(is_train)
+        self.iterator = iter(
+            tf.data.Dataset.from_tensor_slices((self.x, self.y)).shuffle(len(self.x)).batch(32).repeat()
+        )
+
+    @property
+    def steps_per_epoch(self):
+        return len(self.x) // self.params.batch_size
+
+    def get_next(self):
+        x, y = next(self.iterator)
+        return {"inputs": x, "y_true": y}
+
+    def get_data(self, is_train: bool):
+        (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+        x = x_train if is_train else x_test
+        y = y_train if is_train else y_test
+        x = x / 255.0
+        # Add a channels dimension
+        x = x[..., tf.newaxis].astype("float32")
+        return x, y
+
+
+dataloader_list = {"mnist": MnistDataloader}
+
+
+def get_dataloader(params: DataloaderParams, is_train: bool) -> BaseDataloader:
     """ """
-    return get_mnist(train_params, test_params)
+    dataloader_class = dataloader_list[params.name]
+    return dataloader_class(dataloader_class.Params(**params.params), is_train)
 
 
-def get_mnist(
-    train_params: DataloaderParams, test_params: DataloaderParams
-) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
-    mnist = keras.datasets.mnist
-
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, x_test = x_train / 255.0, x_test / 255.0
-
-    # Add a channels dimension
-    x_train = x_train[..., tf.newaxis].astype("float32")
-    x_test = x_test[..., tf.newaxis].astype("float32")
-
-    train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(10000).batch(32)
-    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)
-
-    train_params.steps_per_epoch = len(x_train) // 32
-    test_params.steps_per_epoch = len(x_test) // 32
-
-    return train_ds, test_ds
+def get_default_dataloader_params(name: str) -> BaseModel:
+    """ """
+    return get_object_default_params(name, dataloader_list)

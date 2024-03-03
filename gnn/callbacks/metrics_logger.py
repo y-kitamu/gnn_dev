@@ -6,46 +6,48 @@ Create Date : 2024-02-27 22:24:34
 
 from pathlib import Path
 
-import keras
-
 from ..logger import logger
+from .base import BaseCallback
 
 
-class MetricsLogger(keras.callbacks.Callback):
+class MetricsLogger(BaseCallback):
     def __init__(self, tensorboard_dir: Path | None = None):
         super().__init__()
         self.tensorboard_dir = tensorboard_dir
-
-        self.train_loss = keras.metrics.Mean(name="train_loss")
-        self.train_accuracy = keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
-        self.test_loss = keras.metrics.Mean(name="test_loss")
-        self.test_accuracy = keras.metrics.SparseCategoricalAccuracy(name="test_accuracy")
+        self.epoch = 0
+        self.train_epoch_result = {}
+        self.test_epoch_result = {}
 
     def on_epoch_begin(self, epoch: int, logs=None):
         super().on_epoch_begin(epoch, logs)
-        self.train_loss.reset_state()
-        self.train_accuracy.reset_state()
-        self.test_loss.reset_state()
-        self.test_accuracy.reset_state()
+        self.epoch = epoch
+        self.trainer.network.reset_metrics()
+        self.trainer.loss.reset_metrics()
 
     def on_train_batch_end(self, batch: int, logs=None):
         super().on_train_batch_end(batch, logs)
-        self.train_loss(self.model.loss_val)
-        self.train_accuracy(self.model.y_pred, self.model.y)
+        self.trainer.network.update_metrics()
+        self.trainer.loss.update_metrics()
 
     def on_test_batch_end(self, batch: int, logs=None):
         super().on_test_batch_end(batch, logs)
-        self.test_loss(self.model.loss_val)
-        self.test_accuracy(self.model.y_pred, self.model.y)
+        self.trainer.network.update_metrics()
+        self.trainer.loss.update_metrics()
+
+    def on_test_begin(self, logs=None):
+        # この時点で入っている値はtrainの値
+        self.train_epoch_result = self.trainer.network.get_metrics()
+        self.train_epoch_result.update(self.trainer.loss.get_metrics())
+        log_str = ", ".join([f"{key}: {value:.4f}" for key, value in self.train_epoch_result.items()])
+        logger.info(f"Epoch {self.epoch} - train - {log_str}")
+
+        # metrixの値をリセット
+        self.trainer.network.reset_metrics()
+        self.trainer.loss.reset_metrics()
 
     def on_epoch_end(self, epoch: int, logs=None):
         super().on_epoch_end(epoch, logs)
-        logger.info(
-            "Epoch: {}, Loss: {:.4f}, Accuracy: {:.4f}, Test Loss : {:.4f}, Test Accuracy : {:.4f}".format(
-                epoch,
-                self.train_loss.result(),
-                self.train_accuracy.result(),
-                self.test_loss.result(),
-                self.test_accuracy.result(),
-            )
-        )
+        self.test_epoch_result = self.trainer.network.get_metrics()
+        self.test_epoch_result.update(self.trainer.loss.get_metrics())
+        log_str = ", ".join([f"{key}: {value:.4f}" for key, value in self.test_epoch_result.items()])
+        logger.info(f"Epoch {self.epoch} - test - {log_str}")

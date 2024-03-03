@@ -3,4 +3,4 @@
 
 from . import callbacks, dataloader, layers, losses, optimizers
 from .logger import logger
-from .trainer import BaseTrainer, TrainParams
+from .trainer import Trainer

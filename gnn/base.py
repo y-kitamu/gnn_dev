@@ -5,10 +5,22 @@ Create Date : 2024-02-28 22:27:18
 Copyright (c) 2019- Yusuke Kitamura <ymyk6602@gmail.com>
 """
 
+import keras
 from pydantic import BaseModel
 
 
-class BaseParams:
+class MetrixMixIn:
+    def update_metrics(self) -> None:
+        pass
+
+    def get_metrics(self) -> dict[str, float]:
+        return dict()
+
+    def reset_metrics(self) -> None:
+        pass
+
+
+class BaseParams(BaseModel):
     name: str = ""
     params: dict = {}
 
