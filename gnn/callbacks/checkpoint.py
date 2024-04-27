@@ -6,11 +6,10 @@ Create Date : 2024-03-03 17:45:58
 
 from pathlib import Path
 
-import keras
 import tensorflow as tf
 
 from ..base_trainer import BaseTrainer
-from ..logger import logger
+from ..logging import logger
 from .base import BaseCallback
 
 

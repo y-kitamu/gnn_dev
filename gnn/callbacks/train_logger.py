@@ -1,4 +1,4 @@
-"""stdout_logger.py
+"""train_logger.py
 
 Author : Yusuke Kitamura
 Create Date : 2024-03-03 12:23:28
@@ -25,7 +25,7 @@ class TrainLogger(BaseCallback):
         self.epoch = 0
         self.steps = 0
 
-    def on_train_begin(self):
+    def on_train_begin(self, logs=None):
         self.train_steps_per_epoch = self.trainer.train_dataloader.steps_per_epoch
         self.test_steps_per_epoch = self.trainer.test_dataloader.steps_per_epoch
 

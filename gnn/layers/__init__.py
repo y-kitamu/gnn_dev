@@ -7,7 +7,7 @@ Create Date : 2024-02-28 22:14:35
 import keras
 from pydantic import BaseModel
 
-from ..base import BaseParams, get_object, get_object_default_params
+from ..base import BaseParams, get_object, get_default_params_of
 from .base import BaseNetwork
 from .gcn import GCN
 
@@ -44,4 +44,4 @@ def get_model(params: NetworkParams) -> keras.Layer:
 
 def get_default_model_params(name: str) -> BaseModel:
     """ """
-    return get_object_default_params(name, network_list)
+    return get_default_params_of(name, network_list)

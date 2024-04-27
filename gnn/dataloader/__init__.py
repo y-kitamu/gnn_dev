@@ -8,7 +8,7 @@ import keras
 import tensorflow as tf
 from pydantic import BaseModel
 
-from ..base import BaseParams, get_object_default_params
+from ..base import BaseParams, get_default_params_of
 from .base import BaseDataloader
 
 
@@ -56,4 +56,4 @@ def get_dataloader(params: DataloaderParams, is_train: bool) -> BaseDataloader:
 
 def get_default_dataloader_params(name: str) -> BaseModel:
     """ """
-    return get_object_default_params(name, dataloader_list)
+    return get_default_params_of(name, dataloader_list)

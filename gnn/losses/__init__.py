@@ -8,7 +8,7 @@ import keras
 import tensorflow as tf
 from pydantic import BaseModel
 
-from ..base import BaseParams, get_object, get_object_default_params
+from ..base import BaseParams, get_object, get_default_params_of
 from .base import BaseLoss
 
 
@@ -61,4 +61,4 @@ def get_loss(params: LossParams) -> BaseLoss:
 
 def get_default_loss_params(name: str) -> BaseModel:
     """ """
-    return get_object_default_params(name, loss_list)
+    return get_default_params_of(name, loss_list)

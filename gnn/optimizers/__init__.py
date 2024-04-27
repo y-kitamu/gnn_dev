@@ -7,7 +7,7 @@ Create Date : 2024-02-25 22:44:52
 import tensorflow as tf
 from pydantic import BaseModel
 
-from ..base import BaseParams, get_object, get_object_default_params
+from ..base import BaseParams, get_default_params_of, get_object
 
 
 class OptimizerParams(BaseParams):
@@ -25,10 +25,10 @@ class Adam(tf.keras.optimizers.Adam):  # kerasではなくtf.kerasを使う
 optimizer_list = {"adam": Adam}
 
 
-def get_optimizer(params: OptimizerParams) -> keras.optimizers.Optimizer:
+def get_optimizer(params: OptimizerParams) -> tf.keras.optimizers.Optimizer:
     """ """
     return get_object(params, optimizer_list)
 
 
 def get_default_optimizer_params(name: str) -> BaseModel:
-    return get_object_default_params(name, optimizer_list)
+    return get_default_params_of(name, optimizer_list)

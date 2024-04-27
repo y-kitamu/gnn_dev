@@ -8,8 +8,7 @@ import keras
 
 from .base import BaseCallback
 from .checkpoint import Checkpoint
-from .metrics_logger import MetricsLogger
-from .stdout_logger import StdoutLogger
+from .train_logger import TrainLogger
 
 
 class CallbackList(keras.callbacks.CallbackList, BaseCallback):
