@@ -1,6 +1,7 @@
 """trainer.py
 """
 
+from pathlib import Path
 from typing import List
 
 import tensorflow as tf
@@ -8,6 +9,7 @@ from pydantic import BaseModel
 
 from .base_trainer import BaseTrainer
 from .callbacks import BaseCallback
+from .constants import PROJECT_ROOT
 from .dataloader import (DataloaderParams, get_dataloader,
                          get_default_dataloader_params)
 from .layers import NetworkParams, get_default_model_params, get_model
@@ -19,6 +21,8 @@ from .optimizers import (OptimizerParams, get_default_optimizer_params,
 class Trainer(BaseTrainer):
     class Params(BaseModel):
         epochs: int = 5
+        output_dir: Path = Path()
+        pretrain_model_dir: Path | None = None
         network_params: NetworkParams = NetworkParams()
         train_dataloader_params: DataloaderParams = DataloaderParams()
         test_dataloader_params: DataloaderParams = DataloaderParams()
@@ -26,6 +30,14 @@ class Trainer(BaseTrainer):
         loss_params: LossParams = LossParams()
         network_input_keys: List[str] = ["inputs"]
         loss_input_keys: List[str] = ["y_true"]
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            if not self.output_dir.is_absolute():
+                self.output_dir = PROJECT_ROOT / self.output_dir
+            if self.pretrain_model_dir is not None and not self.pretrain_model_dir.is_absolute():
+                self.pretrain_model_dir = PROJECT_ROOT / self.pretrain_model_dir
 
         @classmethod
         def get_default_params(
@@ -65,13 +77,16 @@ class Trainer(BaseTrainer):
         self._train_dataloader = get_dataloader(params.train_dataloader_params, is_train=True)
         self._test_dataloader = get_dataloader(params.test_dataloader_params, is_train=False)
         self._callbacks = callbacks
+        self._epoch = tf.Variable(0, dtype=tf.int32)
+
         self._callbacks.set_trainer(self)
 
     def train(self):
         """ """
         self._callbacks.on_train_begin()
 
-        for epoch in range(self._params.epochs):
+        for epoch in range(self._epoch.numpy(), self._params.epochs):
+            self._loss.reset_metrics()
             self._callbacks.on_epoch_begin(epoch)
 
             assert self.train_dataloader.steps_per_epoch > 0, "steps_per_epoch must be set"
@@ -82,18 +97,23 @@ class Trainer(BaseTrainer):
                 self._callbacks.on_train_batch_begin(step)
                 data = self.train_dataloader.get_next()
                 self._train_step(data)
+                self._loss.update_metrics()
                 self._callbacks.on_train_batch_end(step)
 
             # validation
             self._callbacks.on_test_begin()
+            self._loss.reset_metrics()
             for step in range(self.test_dataloader.steps_per_epoch):
                 self._callbacks.on_test_batch_begin(step)
                 data = self.test_dataloader.get_next()
                 self._test_step(data)
+                self._loss.update_metrics()
                 self._callbacks.on_test_batch_end(step)
             self._callbacks.on_test_end()
+            self._loss.reset_metrics()
 
             self._callbacks.on_epoch_end(epoch)
+            self._epoch.assign_add(1)
 
         self._callbacks.on_train_end()
 

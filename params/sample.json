@@ -1,5 +1,6 @@
 {
   "epochs": 10,
+  "output_dir": "results/sample",
   "network_params": {
     "name": "simple",
     "params": {}
@@ -22,9 +23,9 @@
   },
   "loss_params": {
     "name": "cross_entropy",
-      "params": {
-          "from_logits": true
-      }
+    "params": {
+      "from_logits": true
+    }
   },
   "network_input_keys": ["inputs"],
   "loss_input_keys": ["y_true"]

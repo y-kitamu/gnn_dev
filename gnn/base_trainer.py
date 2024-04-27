@@ -5,6 +5,7 @@ Create Date : 2024-03-03 11:48:08
 """
 
 import keras
+import tensorflow as tf
 from pydantic import BaseModel
 
 from .dataloader import BaseDataloader
@@ -16,6 +17,10 @@ class BaseTrainer:
     @property
     def params(self) -> BaseModel:
         return self._params
+
+    @property
+    def epoch(self) -> tf.Variable:
+        return self._epoch
 
     @property
     def network(self) -> BaseNetwork:

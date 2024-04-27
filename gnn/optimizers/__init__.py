@@ -4,7 +4,7 @@ Author : Yusuke Kitamura
 Create Date : 2024-02-25 22:44:52
 """
 
-import keras
+import tensorflow as tf
 from pydantic import BaseModel
 
 from ..base import BaseParams, get_object, get_object_default_params
@@ -14,7 +14,7 @@ class OptimizerParams(BaseParams):
     pass
 
 
-class Adam(keras.optimizers.Adam):
+class Adam(tf.keras.optimizers.Adam):  # kerasではなくtf.kerasを使う
     class Params(BaseModel):
         learning_rate: float = 1e-3
 

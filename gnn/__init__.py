@@ -2,5 +2,5 @@
 """
 
 from . import callbacks, dataloader, layers, losses, optimizers
-from .logger import logger
+from .logging import logger
 from .trainer import Trainer
