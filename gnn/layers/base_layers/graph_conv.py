@@ -5,10 +5,10 @@ Create Date : 2024-02-28 22:15:26
 """
 
 import keras
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
-from ...logger import logger
+from ...logging import logger
 
 
 class GraphConv(keras.layers.Layer):
