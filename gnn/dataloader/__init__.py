@@ -45,7 +45,7 @@ class MnistDataloader(BaseDataloader):
         return x, y
 
 
-dataloader_list = {"mnist": MnistDataloader}
+dataloader_list: dict[str, type[BaseDataloader]] = {"mnist": MnistDataloader}
 
 
 def get_dataloader(params: DataloaderParams, is_train: bool) -> BaseDataloader:

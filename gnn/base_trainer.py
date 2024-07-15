@@ -27,8 +27,12 @@ class BaseTrainer:
         return self._network
 
     @property
-    def loss(self) -> BaseLoss:
-        return self._loss
+    def loss(self) -> tf.Tensor:
+        return self.output_data["loss"]
+
+    @property
+    def loss_fn(self) -> BaseLoss:
+        return self._loss_fn
 
     @property
     def optimizer(self) -> keras.optimizers.Optimizer:

@@ -23,13 +23,20 @@ class Checkpoint(BaseCallback):
 
     def set_trainer(self, trainer: BaseTrainer):
         super().set_trainer(trainer)
-        self.checkpoint = tf.train.Checkpoint(model=trainer.network, epoch=trainer.epoch)
+        self.checkpoint = tf.train.Checkpoint(
+            model=trainer.network, optimizer=trainer.optimizer, epoch=trainer.epoch
+        )
         # restore latest model
-        model_dir = self.pretrain_model_dir or self.output_dir
-        latest_path = tf.train.latest_checkpoint(model_dir)
-        if latest_path is not None:
-            logger.info(f"Restore model from : {latest_path}")
-            self.checkpoint.restore(latest_path)
+        for model_dir in [self.output_dir, self.pretrain_model_dir]:
+            if model_dir is None or not model_dir.exists():
+                continue
+            latest_path = tf.train.latest_checkpoint(model_dir)
+            if latest_path is not None:
+                logger.info(f"Restore model from : {latest_path}")
+                self.checkpoint.restore(latest_path)
+                if model_dir == self.pretrain_model_dir:
+                    self.trainer.epoch.assign(0)  # reset epoch
+                break
 
     def on_epoch_end(self, epoch, logs=None):
         save_path = self.checkpoint.save(file_prefix=self.output_dir / "ckpt")

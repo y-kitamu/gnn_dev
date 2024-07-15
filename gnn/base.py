@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 
 class MetrixMixIn:
-    def update_metrics(self) -> None:
+    def update_metrics(self, data: dict[str, Any]) -> None:
         pass
 
     def get_metrics(self) -> dict[str, float]:

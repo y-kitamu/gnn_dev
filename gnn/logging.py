@@ -3,6 +3,7 @@
 Author : Yusuke Kitamura
 Create Date : 2023-12-03 09:30:31
 """
+
 import logging
 import sys
 from pathlib import Path
@@ -22,6 +23,14 @@ LONG_FORMATTER = logging.Formatter(
 logger = logging.getLogger(LOGGER_NAME)
 
 
+def remove_handler(target_logger: logging.Logger, handler_class: type):
+    for handler in list(target_logger.handlers):
+        if isinstance(handler, handler_class):
+            target_logger.removeHandler(handler)
+    if target_logger.parent is not None:
+        remove_handler(target_logger.parent, handler_class)
+
+
 def enable_logging_to_stdout(
     log_level: int = DEFAULT_LOGLEVEL, formatter: logging.Formatter = SHORT_FORMATTER
 ):
@@ -31,9 +40,10 @@ def enable_logging_to_stdout(
         formatter (logging.Formatter) : log format
     """
     # remove old handler
-    for handler in list(logger.handlers):
-        if isinstance(handler, logging.StreamHandler):
-            logger.removeHandler(handler)
+    # for handler in list(logger.handlers):
+    #     if isinstance(handler, logging.StreamHandler):
+    #         logger.removeHandler(handler)
+    remove_handler(logger, logging.StreamHandler)
 
     # add new handler
     ch = logging.StreamHandler(sys.stdout)
@@ -57,10 +67,11 @@ def enable_logging_to_file(
         format (logging.Formatter) :
     """
     # remove old handler
-    if remove_old_handler:
-        for handler in list(logger.handlers):
-            if isinstance(handler, logging.FileHandler):
-                logger.removeHandler(handler)
+    # if remove_old_handler:
+    #     for handler in list(logger.handlers):
+    #         if isinstance(handler, logging.FileHandler):
+    #             logger.removeHandler(handler)
+    remove_handler(logger, logging.FileHandler)
 
     # add new handler
     filepath.parent.mkdir(parents=True, exist_ok=True)

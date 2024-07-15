@@ -34,17 +34,17 @@ class TrainLogger(BaseCallback):
 
     def on_train_batch_end(self, batch, logs=None):
         print(
-            "train : {:5d} / {:5d}, {}".format(batch, self.train_steps_per_epoch, self.trainer.loss_val),
+            "train : {:5d} / {:5d}, {:.3f}".format(batch, self.train_steps_per_epoch, self.trainer.loss),
             end="\r",
         )
         if self.train_summary_writer is not None:
             with self.train_summary_writer.as_default():
-                tf.summary.scalar("loss", self.trainer.loss_val, step=self.steps)
+                tf.summary.scalar("loss", self.trainer.loss, step=self.steps)
         self.steps += 1
 
     def on_test_begin(self, logs=None):
         # この時点でget_metricsで取得できる値はtrainの値
-        train_epoch_result = self.trainer.loss.get_metrics()
+        train_epoch_result = self.trainer.loss_fn.get_metrics()
         if self.train_summary_writer is not None:
             with self.train_summary_writer.as_default():
                 for name, value in train_epoch_result.items():
@@ -56,13 +56,13 @@ class TrainLogger(BaseCallback):
 
     def on_test_batch_end(self, batch, logs=None):
         print(
-            "test : {:5d} / {:5d}, {}".format(batch, self.test_steps_per_epoch, self.trainer.loss_val),
+            "test : {:5d} / {:5d}, {:.3f}".format(batch, self.test_steps_per_epoch, self.trainer.loss),
             end="\r",
         )
 
     def on_test_end(self, epoch, logs=None):
         self.test_epoch_result = self.trainer.network.get_metrics()
-        self.test_epoch_result.update(self.trainer.loss.get_metrics())
+        self.test_epoch_result.update(self.trainer.loss_fn.get_metrics())
         log_str = ", ".join([f"{key}: {value:.4f}" for key, value in self.test_epoch_result.items()])
         logger.info(f"Epoch {self.epoch} - test - {log_str}")
 
