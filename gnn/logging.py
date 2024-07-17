@@ -21,6 +21,7 @@ LONG_FORMATTER = logging.Formatter(
     fmt="[%(asctime)s %(levelname)s %(pathname)s in %(funcName)s at line %(lineno)d] %(message)s"
 )
 logger = logging.getLogger(LOGGER_NAME)
+logger.propagate = False
 
 
 def remove_handler(target_logger: logging.Logger, handler_class: type):

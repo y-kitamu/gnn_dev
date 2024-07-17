@@ -13,6 +13,7 @@ from .constants import PROJECT_ROOT
 from .dataloader import (DataloaderParams, get_dataloader,
                          get_default_dataloader_params)
 from .layers import NetworkParams, get_default_model_params, get_model
+from .logging import enable_logging_to_stdout
 from .losses import LossParams, get_default_loss_params, get_loss
 from .optimizers import (OptimizerParams, get_default_optimizer_params,
                          get_optimizer)

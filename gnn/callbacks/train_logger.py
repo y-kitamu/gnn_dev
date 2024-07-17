@@ -28,9 +28,10 @@ class TrainLogger(BaseCallback):
     def on_train_begin(self, logs=None):
         self.train_steps_per_epoch = self.trainer.train_dataloader.steps_per_epoch
         self.test_steps_per_epoch = self.trainer.test_dataloader.steps_per_epoch
+        self.epoch = self.trainer.epoch.numpy()
 
-    def on_epoch_begin(self, epoch, logs=None):
-        logger.info(f"Epoch {epoch} start")
+    # def on_epoch_begin(self, epoch, logs=None):
+    #     logger.info(f"Epoch {epoch} start")
 
     def on_train_batch_end(self, batch, logs=None):
         print(
@@ -52,7 +53,7 @@ class TrainLogger(BaseCallback):
         log_str = ", ".join([f"{key}: {value:.4f}" for key, value in train_epoch_result.items()])
         logger.info(f"Epoch {self.epoch} - train - {log_str}")
 
-        logger.info("test start")
+        # logger.info("test start")
 
     def on_test_batch_end(self, batch, logs=None):
         print(
@@ -69,7 +70,7 @@ class TrainLogger(BaseCallback):
         if self.test_summary_writer is not None:
             with self.test_summary_writer.as_default():
                 for name, value in self.test_epoch_result.items():
-                    tf.summary.scalar(name, value, step=self.epoch)
+                    tf.summary.scalar(name, value, step=self.steps)
 
     def on_epoch_end(self, epoch, logs=None):
-        logger.info(f"Epoch {epoch} end")
+        self.epoch += 1

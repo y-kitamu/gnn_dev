@@ -1,4 +1,4 @@
-"""binary_crossentropy.py
+"""binary_crossentropy.Pu
 
 Author : Yusuke Kitamura
 Create Date : 2024-07-15 17:56:38
@@ -16,11 +16,11 @@ from .base import BaseLoss
 
 class BinaryCrossEntropyLoss(BaseLoss):
     class Params(BaseModel):
-        from_logits: bool = False
+        from_logits: bool = True
 
     def __init__(self, params: Params):
         super().__init__()
-        self.bce = keras.losses.BinaryCrossentropy(from_logits=True)
+        self.bce = keras.losses.BinaryCrossentropy(from_logits=params.from_logits)
 
         self.metrics = {
             "loss": keras.metrics.Mean(name="loss"),
@@ -35,10 +35,11 @@ class BinaryCrossEntropyLoss(BaseLoss):
 
     def update_metrics(self, data) -> None:
         self.metrics["loss"](data["loss"])
-        self.metrics["accuracy"](data["y_true"], data["y_pred"])
-        y_true_onehot = tf.one_hot(tf.cast(data["y_true"], tf.int32), data["y_pred"].shape[-1])
-        self.metrics["recall"](y_true_onehot, data["y_pred"])
-        self.metrics["precision"](y_true_onehot, data["y_pred"])
+        y_pred = tf.nn.sigmoid(data["y_pred"])
+        self.metrics["accuracy"](data["y_true"], y_pred)
+        # y_true_onehot = tf.one_hot(tf.cast(data["y_true"], tf.int32), data["y_pred"].shape[-1])
+        self.metrics["recall"](data["y_true"], y_pred)
+        self.metrics["precision"](data["y_true"], y_pred)
 
     def get_metrics(self) -> dict[str, float]:
         return {name: metric.result() for name, metric in self.metrics.items()}
