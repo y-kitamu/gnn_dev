@@ -62,14 +62,14 @@ class TrainLogger(BaseCallback):
         )
 
     def on_test_end(self, epoch, logs=None):
-        self.test_epoch_result = self.trainer.network.get_metrics()
-        self.test_epoch_result.update(self.trainer.loss_fn.get_metrics())
-        log_str = ", ".join([f"{key}: {value:.4f}" for key, value in self.test_epoch_result.items()])
+        #self.test_epoch_result = self.trainer.network.get_metrics()
+        test_epoch_result = self.trainer.loss_fn.get_metrics()
+        log_str = ", ".join([f"{key}: {value:.4f}" for key, value in test_epoch_result.items()])
         logger.info(f"Epoch {self.epoch} - test - {log_str}")
 
         if self.test_summary_writer is not None:
             with self.test_summary_writer.as_default():
-                for name, value in self.test_epoch_result.items():
+                for name, value in test_epoch_result.items():
                     tf.summary.scalar(name, value, step=self.steps)
 
     def on_epoch_end(self, epoch, logs=None):
