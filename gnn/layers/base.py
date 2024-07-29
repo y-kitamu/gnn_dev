@@ -6,8 +6,6 @@ Create Date : 2024-02-28 22:21:41
 
 import keras
 
-from ..base import MetrixMixIn
 
-
-class BaseNetwork(keras.Layer, MetrixMixIn):
+class BaseNetwork(keras.Layer):
     pass

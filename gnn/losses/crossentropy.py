@@ -14,13 +14,14 @@ from pydantic import BaseModel
 from .base import BaseLoss
 
 
-class BinaryCrossEntropyLoss(BaseLoss):
+class BaseCrossEntropyLoss(BaseLoss):
     class Params(BaseModel):
         from_logits: bool = True
 
     def __init__(self, params: Params):
         super().__init__()
-        self.bce = keras.losses.BinaryCrossentropy(from_logits=params.from_logits)
+        self.params = params
+        # self.bce = keras.losses.BinaryCrossentropy(from_logits=params.from_logits)
 
         self.metrics = {
             "loss": keras.metrics.Mean(name="loss"),
@@ -28,6 +29,10 @@ class BinaryCrossEntropyLoss(BaseLoss):
             "recall": keras.metrics.Recall(name="recall"),
             "precision": keras.metrics.Precision(name="precision"),
         }
+
+    @property
+    def loss_fn(self):
+        return self._loss_fn
 
     @property
     def output_keys(self, data) -> list[str]:
@@ -49,5 +54,17 @@ class BinaryCrossEntropyLoss(BaseLoss):
             metric.reset_state()
 
     def call(self, y_true, y_pred) -> dict[str, Any]:
-        loss = self.bce(y_true, y_pred)
+        loss = self.loss_fn(y_true, y_pred)
         return {"loss": loss, "y_true": y_true, "y_pred": y_pred}
+
+
+class BinaryCrossentropyLoss(BaseCrossEntropyLoss):
+    def __init__(self, params: BaseCrossEntropyLoss.Params):
+        super().__init__(params)
+        self._loss_fn = keras.losses.BinaryCrossentropy(from_logits=params.from_logits)
+
+
+class CategoricalCrossentropyLoss(BaseCrossEntropyLoss):
+    def __init__(self, params: BaseCrossEntropyLoss.Params):
+        super().__init__(params)
+        self._loss_fn = keras.losses.CategoricalCrossentropy(from_logits=params.from_logits)

@@ -12,14 +12,17 @@ from pydantic import BaseModel
 
 from ..base import BaseParams, get_default_params_of, get_object
 from .base import BaseLoss
-from .binary_crossentropy import BinaryCrossEntropyLoss
+from .crossentropy import BinaryCrossentropyLoss, CategoricalCrossentropyLoss
 
 
 class LossParams(BaseParams):
     pass
 
 
-loss_list = {"bce": BinaryCrossEntropyLoss}
+loss_list = {
+    "bce": BinaryCrossentropyLoss,
+    "cce": CategoricalCrossentropyLoss,
+}
 
 
 def get_loss(params: LossParams) -> BaseLoss:
