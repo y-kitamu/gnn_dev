@@ -49,6 +49,11 @@ class Trainer(BaseTrainer):
             return v.as_posix()
 
         @classmethod
+        def load_json(cls, json_path: Path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                return cls.model_validate_json(f.read())
+
+        @classmethod
         def get_default_params(
             cls,
             network_name: str = "simple",

@@ -54,10 +54,11 @@ def get_network_class(network: Type[keras.Layer]):
             pass
 
         def __init__(self, params: Params):
+            super().__init__()
             self.network = network(**params.model_dump())
 
         def call(self, *args, **kwargs):
-            self.network(*args, **kwargs)
+            return {"y_pred": self.network(*args, **kwargs)}
 
     return NetworkWrapper
 
