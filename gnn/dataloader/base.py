@@ -14,7 +14,7 @@ class BaseDataloader:
         batch_size: int = 1
 
     def __init__(self, params: Params):
-        self.params = params
+        self.kparams = params
 
     @property
     def steps_per_epoch(self):
