@@ -1,7 +1,4 @@
 """run_train.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-02-25 22:36:32
 """
 
 # import argparse
