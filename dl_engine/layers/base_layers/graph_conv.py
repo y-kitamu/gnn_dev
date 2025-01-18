@@ -1,7 +1,4 @@
 """gcn.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-02-28 22:15:26
 """
 
 import keras

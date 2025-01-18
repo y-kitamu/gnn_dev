@@ -2,18 +2,15 @@
 """
 
 from pathlib import Path
-from typing import List
 
 import tensorflow as tf
 from pydantic import BaseModel, field_serializer, field_validator
 
-from .base_trainer import BaseTrainer
-from .callbacks import BaseCallback
+from .base import BaseCallback, BaseTrainer
 from .constants import PROJECT_ROOT
 from .dataloader import (DataloaderParams, get_dataloader,
                          get_default_dataloader_params)
 from .layers import NetworkParams, get_default_model_params, get_model
-from .logging import enable_logging_to_stdout
 from .losses import LossParams, get_default_loss_params, get_loss
 from .optimizers import (OptimizerParams, get_default_optimizer_params,
                          get_optimizer)
@@ -28,9 +25,9 @@ class Trainer(BaseTrainer):
         test_dataloader_params: DataloaderParams = DataloaderParams()
         optimizer_params: OptimizerParams = OptimizerParams()
         loss_params: LossParams = LossParams()
-        network_input_keys: List[str] = ["input"]
-        loss_input_keys: List[str] = ["y_true"]
-        loss_target_keys: List[str] = ["loss"]
+        network_input_keys: list[str] = ["input"]
+        loss_input_keys: list[str] = ["y_true"]
+        loss_target_keys: list[str] = ["loss"]
 
         @field_validator("pretrain_model_dir")
         def _validate_path(cls, v: Path):
@@ -56,7 +53,7 @@ class Trainer(BaseTrainer):
         @classmethod
         def get_default_params(
             cls,
-            network_name: str = "simple",
+            network_name: str = "resnet50",
             optimizer_name: str = "adam",
             loss_name: str = "bce",
             dataloader_name: str = "mnist",
@@ -93,7 +90,28 @@ class Trainer(BaseTrainer):
         self._callbacks = callbacks
         self._epoch = tf.Variable(0, dtype=tf.int32)
 
+        # initialize network
+        self._network(tf.keras.Input(self._train_dataloader.output_shape))
+
         self._callbacks.set_trainer(self)
+
+        self.validate_settings()
+
+    def validate_settings(self):
+
+        for key in self._params.network_input_keys:
+            assert (
+                key in self._train_dataloader.output_keys
+            ), f"{key} is not in train_dataloader.output_keys"
+            assert (
+                key in self._test_dataloader.output_keys
+            ), f"{key} is not in test_dataloader.output_keys"
+
+        train_keys = self._network.output_keys + self._train_dataloader.output_keys
+        test_keys = self._network.output_keys + self._test_dataloader.output_keys
+        for key in self._params.loss_input_keys:
+            assert key in train_keys, f"{key} is not in network.output_keys"
+            assert key in test_keys, f"{key} is not in network.output_keys"
 
     def train(self):
         """ """

@@ -1,17 +1,14 @@
 """__init__.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-02-28 22:14:35
 """
 
 import inspect
-from typing import Any, Type
+from typing import Any
 
 import keras
 from pydantic import BaseModel, create_model
 
-from ..base import BaseParams, get_default_params_of, get_object
-from .base import BaseNetwork
+from ..base import BaseNetwork, BaseParams, get_default_params_of, get_object
+from .conv_classifier import ConvClassifier
 from .gcn import GCN
 
 
@@ -19,25 +16,7 @@ class NetworkParams(BaseParams):
     pass
 
 
-class SimpleModel(BaseNetwork):
-    class Params(BaseModel):
-        pass
-
-    def __init__(self, params: Params):
-        super().__init__()
-        self.conv1 = keras.layers.Conv2D(32, 3, activation="relu")
-        self.flatten = keras.layers.Flatten()
-        self.d1 = keras.layers.Dense(128, activation="relu")
-        self.d2 = keras.layers.Dense(10)
-
-    def call(self, inputs):
-        x = self.conv1(inputs)
-        x = self.flatten(x)
-        x = self.d1(x)
-        return self.d2(x)
-
-
-def get_network_class(network: Type[keras.Layer]):
+def get_network_class(network: type[keras.Layer]):
     """既存のネットワークをラップしたクラスを作成する"""
     param_class_name = network.__code__.co_name + "Params"
     model_param_class = create_model(
@@ -57,15 +36,15 @@ def get_network_class(network: Type[keras.Layer]):
             super().__init__()
             self.network = network(**params.model_dump())
 
-        def call(self, *args, **kwargs):
+        def call(self, *args, **kwargs) -> dict[str, Any]:
             return {"y_pred": self.network(*args, **kwargs)}
 
     return NetworkWrapper
 
 
 network_list = {
-    "simple": SimpleModel,
     "gcn": GCN,
+    "conv_classifier": ConvClassifier,
     "resnet50": get_network_class(keras.applications.ResNet50),
 }
 

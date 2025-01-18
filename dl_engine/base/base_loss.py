@@ -1,7 +1,4 @@
 """base.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-03-03 11:17:29
 """
 
 from typing import Any
@@ -9,7 +6,16 @@ from typing import Any
 import keras
 from keras.src import ops, tree
 
-from ..base import MetrixMixIn
+
+class MetrixMixIn:
+    def update_metrics(self, data: dict[str, Any]) -> None:
+        pass
+
+    def get_metrics(self) -> dict[str, float]:
+        return dict()
+
+    def reset_metrics(self) -> None:
+        pass
 
 
 class BaseLoss(keras.losses.Loss, MetrixMixIn):

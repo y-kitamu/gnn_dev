@@ -1,8 +1,4 @@
 """convnorm.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-07-25 21:52:10
-Copyright (c) 2019- Yusuke Kitamura <ymyk6602@gmail.com>
 """
 
 import keras

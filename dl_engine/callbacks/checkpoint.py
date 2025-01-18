@@ -1,28 +1,24 @@
 """checkpoint.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-03-03 17:45:58
 """
 
 from pathlib import Path
 
 import tensorflow as tf
 
-from ..base_trainer import BaseTrainer
+from ..base import BaseCallback, BaseTrainer
 from ..logging import logger
-from .base import BaseCallback
 
 
 class Checkpoint(BaseCallback):
 
-    def __init__(self, output_dir: Path, pretrain_model_dir: Path | None = None):
+    def __init__(self, output_dir: Path):
+        self.pretrain_model_dir = None
         self.output_dir = output_dir
-        self.pretrain_model_dir = pretrain_model_dir
-
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def set_trainer(self, trainer: BaseTrainer):
         super().set_trainer(trainer)
+        self.pretrain_model_dir = self.trainer.pretrain_model_dir
         self.checkpoint = tf.train.Checkpoint(
             model=trainer.network, optimizer=trainer.optimizer, epoch=trainer.epoch
         )
@@ -36,6 +32,8 @@ class Checkpoint(BaseCallback):
                 self.checkpoint.restore(latest_path)
                 if model_dir == self.pretrain_model_dir:
                     self.trainer.epoch.assign(0)  # reset epoch
+                else:
+                    self.trainer.epoch.assign_add(1)  # continue epoch
                 break
 
     def on_epoch_end(self, epoch, logs=None):

@@ -1,8 +1,4 @@
 """arcface.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-07-21 15:02:32
-Copyright (c) 2019- Yusuke Kitamura <ymyk6602@gmail.com>
 """
 import tensorflow as tf
 

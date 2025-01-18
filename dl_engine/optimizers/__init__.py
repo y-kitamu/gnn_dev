@@ -1,7 +1,4 @@
 """optimizers.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-02-25 22:44:52
 """
 
 import tensorflow as tf

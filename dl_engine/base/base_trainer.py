@@ -1,22 +1,25 @@
 """base_trainer.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-03-03 11:48:08
 """
+
+from pathlib import Path
 
 import keras
 import tensorflow as tf
 from pydantic import BaseModel
 
-from .dataloader import BaseDataloader
-from .layers import BaseNetwork
-from .losses import BaseLoss
+from .base_dataloader import BaseDataloader
+from .base_layer import BaseNetwork
+from .base_loss import BaseLoss
 
 
 class BaseTrainer:
     @property
     def params(self) -> BaseModel:
         return self._params
+
+    @property
+    def pretrain_model_dir(self) -> Path | None:
+        return self._params.pretrain_model_dir
 
     @property
     def epoch(self) -> tf.Variable:

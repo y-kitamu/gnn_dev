@@ -1,8 +1,4 @@
 """binary_crossentropy.Pu
-
-Author : Yusuke Kitamura
-Create Date : 2024-07-15 17:56:38
-Copyright (c) 2019- Yusuke Kitamura <ymyk6602@gmail.com>
 """
 
 from typing import Any
@@ -11,7 +7,7 @@ import keras
 import tensorflow as tf
 from pydantic import BaseModel
 
-from .base import BaseLoss
+from ..base import BaseLoss
 
 
 class BaseCrossEntropyLoss(BaseLoss):
@@ -28,7 +24,7 @@ class BaseCrossEntropyLoss(BaseLoss):
         return self._loss_fn
 
     @property
-    def output_keys(self, data) -> list[str]:
+    def output_keys(self) -> list[str]:
         return ["loss"]
 
     def get_metrics(self) -> dict[str, float]:

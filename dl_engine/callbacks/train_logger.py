@@ -1,7 +1,4 @@
 """train_logger.py
-
-Author : Yusuke Kitamura
-Create Date : 2024-03-03 12:23:28
 """
 
 from pathlib import Path
@@ -9,7 +6,7 @@ from pathlib import Path
 import tensorflow as tf
 
 from ..logging import logger
-from .base import BaseCallback
+from ..base import BaseCallback
 
 
 class TrainLogger(BaseCallback):
